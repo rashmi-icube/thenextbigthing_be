@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.apache.log4j.Logger;
 import org.owen.helper.DatabaseConnectionHelper;
 import org.owen.helper.UtilHelper;
 import org.rosuda.REngine.REXP;
@@ -36,19 +37,19 @@ public class EmployeeList {
 		}
 		try {
 			RConnection rCon = dch.getRConn();
-			org.apache.log4j.Logger.getLogger(EmployeeList.class).debug("R Connection Available : " + rCon.isConnected());
-			org.apache.log4j.Logger.getLogger(EmployeeList.class).debug("Filling up parameters for rscript function");
+			Logger.getLogger(EmployeeList.class).debug("R Connection Available : " + rCon.isConnected());
+			Logger.getLogger(EmployeeList.class).debug("Filling up parameters for rscript function");
 			rCon.assign("company_id", new int[] { companyId });
 			rCon.assign("emp_id", new int[] { partOfEmployeeIdList.get(0) });
 			rCon.assign("init_type_id", new int[] { initiativeType });
-			org.apache.log4j.Logger.getLogger(EmployeeList.class).debug("Calling the actual function in RScript IndividualSmartList");
+			Logger.getLogger(EmployeeList.class).debug("Calling the actual function in RScript IndividualSmartList");
 			REXP employeeSmartList = rCon.parseAndEval("try(eval(IndividualSmartList(company_id, emp_id, init_type_id)))");
 			if (employeeSmartList.inherits("try-error")) {
-				org.apache.log4j.Logger.getLogger(EmployeeList.class).error("Error: " + employeeSmartList.asString());
+				Logger.getLogger(EmployeeList.class).error("Error: " + employeeSmartList.asString());
 				dch.releaseRcon();
 				throw new Exception("Error: " + employeeSmartList.asString());
 			} else {
-				org.apache.log4j.Logger.getLogger(EmployeeList.class).debug(
+				Logger.getLogger(EmployeeList.class).debug(
 						"Retrieval of the employee smart list completed " + employeeSmartList.asList());
 			}
 
@@ -72,7 +73,7 @@ public class EmployeeList {
 				individualSmartList.add(e);
 			}
 		} catch (Exception e) {
-			org.apache.log4j.Logger.getLogger(EmployeeList.class).error("Error while trying to retrieve the smart list for employee ", e);
+			Logger.getLogger(EmployeeList.class).error("Error while trying to retrieve the smart list for employee ", e);
 		} finally {
 			dch.releaseRcon();
 		}
@@ -93,17 +94,17 @@ public class EmployeeList {
 		try (CallableStatement cstmt = dch.companyConnectionMap.get(companyId).getDataSource().getConnection()
 				.prepareCall("{call getEmployeeList()}");
 				ResultSet res = cstmt.executeQuery()) {
-			org.apache.log4j.Logger.getLogger(EmployeeList.class).debug("getEmployeeMasterList method started");
-			org.apache.log4j.Logger.getLogger(EmployeeList.class).debug("query : " + cstmt);
+			Logger.getLogger(EmployeeList.class).debug("getEmployeeMasterList method started");
+			Logger.getLogger(EmployeeList.class).debug("query : " + cstmt);
 			while (res.next()) {
 				Employee e = setEmployeeDetails(companyId, res);
 				e.setCompanyId(companyId);
 				employeeList.add(e);
 			}
 
-			org.apache.log4j.Logger.getLogger(EmployeeList.class).debug("employeeList : " + employeeList.toString());
+			Logger.getLogger(EmployeeList.class).debug("employeeList : " + employeeList.toString());
 		} catch (SQLException e) {
-			org.apache.log4j.Logger.getLogger(EmployeeList.class).error("Exception while getting the employee master list", e);
+			Logger.getLogger(EmployeeList.class).error("Exception while getting the employee master list", e);
 
 		}
 
@@ -133,7 +134,7 @@ public class EmployeeList {
 
 		e.setFunction(res.getString("Function"));
 		e.setPosition(res.getString("Position"));
-		e.setZone(res.getString("Zone"));
+		e.setLocation(res.getString("Location"));
 		if (UtilHelper.hasColumn(res, "score") && res.getDouble("score") >= 0) {
 			e.setScore(res.getDouble("score"));
 		}
@@ -167,13 +168,13 @@ public class EmployeeList {
 
 			try (CallableStatement cstmt = dch.companyConnectionMap.get(companyId).getDataSource().getConnection().prepareCall(
 					"{call getEmployeeDetails(?)}")) {
-				org.apache.log4j.Logger.getLogger(EmployeeList.class).debug("get method started");
+				Logger.getLogger(EmployeeList.class).debug("get method started");
 				cstmt.setString(1, empSubList.toString().substring(1, empSubList.toString().length() - 1).replaceAll(" ", ""));
 				try (ResultSet res = cstmt.executeQuery()) {
-					org.apache.log4j.Logger.getLogger(EmployeeList.class).debug("query : " + cstmt);
+					Logger.getLogger(EmployeeList.class).debug("query : " + cstmt);
 					while (res.next()) {
 						Employee e = setEmployeeDetails(companyId, res);
-						org.apache.log4j.Logger.getLogger(EmployeeList.class).debug(
+						Logger.getLogger(EmployeeList.class).debug(
 								"Employee  : " + e.getEmployeeId() + "-" + e.getFirstName() + "-" + e.getLastName());
 						empList.add(e);
 					}
@@ -181,7 +182,7 @@ public class EmployeeList {
 				}
 
 			} catch (SQLException e1) {
-				org.apache.log4j.Logger.getLogger(EmployeeList.class).error(
+				Logger.getLogger(EmployeeList.class).error(
 						"Exception while retrieving employee object with employeeIds : " + employeeIdList, e1);
 			}
 		}

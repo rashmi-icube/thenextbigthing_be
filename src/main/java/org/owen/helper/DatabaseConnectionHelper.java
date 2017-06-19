@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
 
+import org.apache.log4j.Logger;
 import org.apache.tomcat.jdbc.pool.DataSource;
 import org.apache.tomcat.jdbc.pool.PoolProperties;
 import org.rosuda.REngine.REXP;
@@ -70,29 +71,29 @@ public class DatabaseConnectionHelper  {
 		// R connection
 		try {
 			rCon = (rCon != null && rCon.isConnected()) ? rCon : new RConnection();
-			org.apache.log4j.Logger.getLogger(DatabaseConnectionHelper.class).debug("Successfully connected to R");
+			Logger.getLogger(DatabaseConnectionHelper.class).debug("Successfully connected to R");
 			String rScriptPath = UtilHelper.getConfigProperty("r_script_path");
 			String workingDir = "setwd(\"" + rScriptPath + "\")";
-			org.apache.log4j.Logger.getLogger(DatabaseConnectionHelper.class).debug("Trying to load the RScript file at " + rScriptPath);
+			Logger.getLogger(DatabaseConnectionHelper.class).debug("Trying to load the RScript file at " + rScriptPath);
 			rCon.eval(workingDir);
 			String s = "source(\"test.r\")";
-			org.apache.log4j.Logger.getLogger(DatabaseConnectionHelper.class).debug("R Path for eval " + s + ".... Loading now ...");
+			Logger.getLogger(DatabaseConnectionHelper.class).debug("R Path for eval " + s + ".... Loading now ...");
 
 			REXP loadRScript = rCon.eval(s);
 			if (loadRScript.inherits("try-error")) {
-				org.apache.log4j.Logger.getLogger(DatabaseConnectionHelper.class).error(
+				Logger.getLogger(DatabaseConnectionHelper.class).error(
 						"An error occurred while trying to loading the R script : " + loadRScript.asString());
 				releaseRcon();
 				throw new REXPMismatchException(loadRScript, "Error: " + loadRScript.asString());
 			} else {
-				org.apache.log4j.Logger.getLogger(DatabaseConnectionHelper.class).debug("Successfully loaded test.r script");
+				Logger.getLogger(DatabaseConnectionHelper.class).debug("Successfully loaded test.r script");
 			}
-			org.apache.log4j.Logger.getLogger(DatabaseConnectionHelper.class).info("HashMap created!!!");
+			Logger.getLogger(DatabaseConnectionHelper.class).info("HashMap created!!!");
 			companyConfigMap = new HashMap<>();
-			org.apache.log4j.Logger.getLogger(DatabaseConnectionHelper.class).info("HashMap created!!!");
+			Logger.getLogger(DatabaseConnectionHelper.class).info("HashMap created!!!");
 			companyConnectionMap = new HashMap<>();
 		} catch (RserveException | REXPMismatchException e) {
-			org.apache.log4j.Logger.getLogger(DatabaseConnectionHelper.class).error("An error occurred while trying to connect to R", e);
+			Logger.getLogger(DatabaseConnectionHelper.class).error("An error occurred while trying to connect to R", e);
 		}
 
 		// runScheduler();
@@ -112,34 +113,34 @@ public class DatabaseConnectionHelper  {
 
 	@Override
 	public void finalize() {
-		org.apache.log4j.Logger.getLogger(DatabaseConnectionHelper.class).debug("Shutting down databases ...");
+		Logger.getLogger(DatabaseConnectionHelper.class).debug("Shutting down databases ...");
 		try {
 			if (!masterDS.getConnection().isClosed()) {
 				try {
 					masterDS.getConnection().close();
 					masterDS.close();
-					org.apache.log4j.Logger.getLogger(DatabaseConnectionHelper.class).debug("Connection to master database closed!!!!");
+					Logger.getLogger(DatabaseConnectionHelper.class).debug("Connection to master database closed!!!!");
 				} catch (SQLException e) {
-					org.apache.log4j.Logger.getLogger(DatabaseConnectionHelper.class)
+					Logger.getLogger(DatabaseConnectionHelper.class)
 							.error("An error occurred while closing the mysql connection", e);
 				}
 			}
 
 			if (rCon.isConnected()) {
 				rCon.close();
-				org.apache.log4j.Logger.getLogger(DatabaseConnectionHelper.class).debug("Connection to R closed!!!!");
+				Logger.getLogger(DatabaseConnectionHelper.class).debug("Connection to R closed!!!!");
 			}
 
 			for (int companyId : companyConnectionMap.keySet()) {
 				companyConnectionMap.get(companyId).getDataSource().getConnection().close();
 				companyConnectionMap.get(companyId).getDataSource().close();
-				org.apache.log4j.Logger.getLogger(DatabaseConnectionHelper.class).debug(
+				Logger.getLogger(DatabaseConnectionHelper.class).debug(
 						"Connection to company sql for companyId : " + companyId + " is " + "closed!!!!");
 
 			}
 
 		} catch (SQLException e) {
-			org.apache.log4j.Logger.getLogger(DatabaseConnectionHelper.class).error("An error occurred while attempting to close db connections", e);
+			Logger.getLogger(DatabaseConnectionHelper.class).error("An error occurred while attempting to close db connections", e);
 		}
 	}
 
@@ -164,18 +165,18 @@ public class DatabaseConnectionHelper  {
 				}
 
 				// company sql connection
-				org.apache.log4j.Logger.getLogger(DatabaseConnectionHelper.class).debug(
+				Logger.getLogger(DatabaseConnectionHelper.class).debug(
 						"Creating a brand new Connection to company sql for companyId : " + companyId);
 				DataSource ds = createDataSource(compConfig);
 				compConnection.setDataSource(ds);
-				org.apache.log4j.Logger.getLogger(DatabaseConnectionHelper.class).debug(
+				Logger.getLogger(DatabaseConnectionHelper.class).debug(
 						"Created new Connection to company sql for companyId : " + companyId);
 
 		
 				companyConnectionMap.put(companyId, compConnection);
 			} 
 		} catch (Exception e) {
-			org.apache.log4j.Logger.getLogger(DatabaseConnectionHelper.class).error(
+			Logger.getLogger(DatabaseConnectionHelper.class).error(
 					"An error occurred while retrieving connection details for companyId : " + companyId, e);
 		}
 	}
@@ -228,30 +229,29 @@ public class DatabaseConnectionHelper  {
 			compConfig.setSqlPassword(rs.getString("sql_password"));
 			compConfig.setRunJobs(rs.getBoolean("jobs"));
 		} catch (SQLException e) {
-			org.apache.log4j.Logger.getLogger(DatabaseConnectionHelper.class).error(
+			Logger.getLogger(DatabaseConnectionHelper.class).error(
 					"Unable to retrieve the company config details from the resultset for companyId : " + companyId, e);
 		}
 		return compConfig;
 	}
 
 	public RConnection getRConn() {
-		org.apache.log4j.Logger.getLogger(DatabaseConnectionHelper.class).debug("Entering the get R connection function");
+		Logger.getLogger(DatabaseConnectionHelper.class).debug("Entering the get R connection function");
 		while (rConInUse)
 			try {
 				Thread.sleep(100);
-				org.apache.log4j.Logger.getLogger(DatabaseConnectionHelper.class).debug("Waiting for R connection");
+				Logger.getLogger(DatabaseConnectionHelper.class).debug("Waiting for R connection");
 			} catch (InterruptedException e) {
-				org.apache.log4j.Logger.getLogger(DatabaseConnectionHelper.class).error("An error occurred while trying to get the R connection", e);
-
+				Logger.getLogger(DatabaseConnectionHelper.class).error("An error occurred while trying to get the R connection", e);
 			}
-		org.apache.log4j.Logger.getLogger(DatabaseConnectionHelper.class).debug("RConnection provided...");
+		Logger.getLogger(DatabaseConnectionHelper.class).debug("RConnection provided...");
 		rConInUse = true;
 		return rCon;
 
 	}
 
 	public void releaseRcon() {
-		org.apache.log4j.Logger.getLogger(DatabaseConnectionHelper.class).debug("Releasing R connection");
+		Logger.getLogger(DatabaseConnectionHelper.class).debug("Releasing R connection");
 		rConInUse = false;
 	}
 }

@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.log4j.Logger;
 import org.owen.helper.DatabaseConnectionHelper;
 
 public class Employee {
@@ -22,7 +23,7 @@ public class Employee {
 	private String grade; // can be high/medium/low
 	private String function;
 	private String position;
-	private String zone;
+	private String location;
 
 	public int getEmployeeId() {
 		return employeeId;
@@ -96,12 +97,12 @@ public class Employee {
 		this.position = position;
 	}
 
-	public String getZone() {
-		return zone;
+	public String getLocation() {
+		return location;
 	}
 
-	public void setZone(String zone) {
-		this.zone = zone;
+	public void setLocation(String location) {
+		this.location = location;
 	}
 
 	public boolean isActive() {
@@ -142,18 +143,18 @@ public class Employee {
 		Employee e = new Employee();
 		try (CallableStatement cstmt = dch.companyConnectionMap.get(companyId).getDataSource().getConnection().prepareCall(
 				"{call getEmployeeDetails(?)}")) {
-			org.apache.log4j.Logger.getLogger(Employee.class).debug("get method started");
+			Logger.getLogger(Employee.class).debug("get method started");
 			cstmt.setInt(1, employeeId);
 			try (ResultSet res = cstmt.executeQuery()) {
-				org.apache.log4j.Logger.getLogger(Employee.class).debug("query : " + cstmt);
+				Logger.getLogger(Employee.class).debug("query : " + cstmt);
 				res.next();
 				e = el.setEmployeeDetails(companyId, res);
-				org.apache.log4j.Logger.getLogger(Employee.class).debug(
+				Logger.getLogger(Employee.class).debug(
 						"Employee  : " + e.getEmployeeId() + "-" + e.getFirstName() + "-" + e.getLastName());
 			}
 
 		} catch (SQLException e1) {
-			org.apache.log4j.Logger.getLogger(Employee.class).error("Exception while retrieving employee object with employeeId : " + employeeId, e1);
+			Logger.getLogger(Employee.class).error("Exception while retrieving employee object with employeeId : " + employeeId, e1);
 
 		}
 		return e;
@@ -167,16 +168,16 @@ public class Employee {
 		try (CallableStatement cstmt = dch.companyConnectionMap.get(companyId).getDataSource().getConnection().prepareCall(
 				"{call getEmployeeDetails(?)}")) {
 			String empIdListStr = employeeIdList.toString();
-			org.apache.log4j.Logger.getLogger(Employee.class).debug("get method started");
+			Logger.getLogger(Employee.class).debug("get method started");
 			cstmt.setString("empid", (empIdListStr.substring(1, empIdListStr.length() - 2)).replace(" ", ""));
 			try (ResultSet res = cstmt.executeQuery()) {
-				org.apache.log4j.Logger.getLogger(Employee.class).debug("query : " + cstmt);
+				Logger.getLogger(Employee.class).debug("query : " + cstmt);
 				while (res.next()) {
 					empList.add(el.setEmployeeDetails(companyId, res));
 				}
 			}
 		} catch (SQLException e1) {
-			org.apache.log4j.Logger.getLogger(Employee.class).error("Exception while retrieving employee object with employeeId : " + employeeId, e1);
+			Logger.getLogger(Employee.class).error("Exception while retrieving employee object with employeeId : " + employeeId, e1);
 
 		}
 		return empList;
@@ -190,16 +191,16 @@ public class Employee {
 		try (CallableStatement cstmt = dch.companyConnectionMap.get(companyId).getDataSource().getConnection().prepareCall(
 				"{call getEmployeeRoleList(?)}")) {
 
-			org.apache.log4j.Logger.getLogger(Employee.class).debug("get method started");
+			Logger.getLogger(Employee.class).debug("get method started");
 			cstmt.setInt("empid", employeeId);
 			try (ResultSet res = cstmt.executeQuery()) {
-				org.apache.log4j.Logger.getLogger(Employee.class).debug("query : " + cstmt);
+				Logger.getLogger(Employee.class).debug("query : " + cstmt);
 				while (res.next()) {
 					roleList.add(res.getString("role"));
 				}
 			}
 		} catch (SQLException e1) {
-			org.apache.log4j.Logger.getLogger(Employee.class).error("Exception while retrieving employee role list with employeeId : " + employeeId,
+			Logger.getLogger(Employee.class).error("Exception while retrieving employee role list with employeeId : " + employeeId,
 					e1);
 
 		}
