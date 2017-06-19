@@ -247,33 +247,31 @@ public class HrDashboardHelper {
 
 			try (ResultSet res = cstmt.executeQuery()) {
 				while (res.next()) {
-					JSONObject json = new JSONObject();
-					json.put("relId", res.getInt("rel_id"));
-					json.put("explanation", res.getString("explanation"));
-					json.put("action", res.getString("action"));
-					json.put("responseCount", res.getString("response_count"));
+					JSONObject teamJson = new JSONObject();
+					teamJson.put("relId", res.getInt("rel_id"));
+					teamJson.put("explanation", res.getString("explanation"));
+					teamJson.put("action", res.getString("action"));
+					teamJson.put("responseCount", res.getString("response_count"));
+					teamJson.put("level", "team");					
+					teamJson.put("stronglyDisagree", res.getInt("strongly_disagree"));
+					teamJson.put("disagree", res.getInt("disagree"));
+					teamJson.put("neutral", res.getInt("neutral"));
+					teamJson.put("agree", res.getInt("agree"));
+					teamJson.put("stronglyAgree", res.getInt("agree"));					
+					result.put(teamJson);
 					
-					
-					JSONObject team= new JSONObject();
-					team.put("stronglyDisagree", res.getInt("strongly_disagree"));
-					team.put("disagree", res.getInt("disagree"));
-					team.put("neutral", res.getInt("neutral"));
-					team.put("agree", res.getInt("agree"));
-					team.put("stronglyAgree", res.getInt("agree"));
-					
-					JSONObject org = new JSONObject();					
-					org.put("stronglyDisagree", res.getInt("strongly_disagree_o"));
-					org.put("disagree", res.getInt("disagree_o"));
-					org.put("neutral", res.getInt("neutral_o"));
-					org.put("agree", res.getInt("agree_o"));
-					org.put("stronglyAgree", res.getInt("strongly_agree_o"));
-					
-					JSONObject level = new JSONObject();
-					level.put("team", team);
-					level.put("org", org);
-					json.put("level", level);
-					
-					result.put(json);
+					JSONObject orgJson = new JSONObject();
+					orgJson.put("relId", res.getInt("rel_id"));
+					orgJson.put("explanation", res.getString("explanation"));
+					orgJson.put("action", res.getString("action"));
+					orgJson.put("responseCount", res.getString("response_count"));
+					orgJson.put("level", "org");					
+					orgJson.put("stronglyDisagree", res.getInt("strongly_disagree_o"));
+					orgJson.put("disagree", res.getInt("disagree_o"));
+					orgJson.put("neutral", res.getInt("neutral_o"));
+					orgJson.put("agree", res.getInt("agree_o"));
+					orgJson.put("stronglyAgree", res.getInt("strongly_agree_o"));					
+					result.put(orgJson);
 				}
 			}
 		} catch (JSONException | SQLException e) {
