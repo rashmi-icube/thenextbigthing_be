@@ -17,7 +17,7 @@ public class HrDashboardHelper {
 	public static void main(String arg[]) {
 		HrDashboardHelper hr = new HrDashboardHelper();
 		System.out.println(hr.getSelfPerception(1, 1, 18, 19));
-		
+
 	}
 
 	public String getNodeList(int companyId, int functionId, int positionId, int locationId) {
@@ -222,7 +222,7 @@ public class HrDashboardHelper {
 					json.put("metricValue", res.getInt("metric_value"));
 					json.put("explanation", res.getString("explanation"));
 					json.put("action", res.getString("action"));
-					json.put("responseCount", res.getString("response_count"));
+					json.put("responseCount", res.getInt("response_count"));
 					result.put(json);
 				}
 			} catch (JSONException e) {
@@ -249,28 +249,37 @@ public class HrDashboardHelper {
 				while (res.next()) {
 					JSONObject teamJson = new JSONObject();
 					teamJson.put("relId", res.getInt("rel_id"));
+					teamJson.put("relName", res.getString("rel_name"));
 					teamJson.put("explanation", res.getString("explanation"));
 					teamJson.put("action", res.getString("action"));
-					teamJson.put("responseCount", res.getString("response_count"));
-					teamJson.put("level", "team");					
-					teamJson.put("stronglyDisagree", res.getInt("strongly_disagree"));
-					teamJson.put("disagree", res.getInt("disagree"));
-					teamJson.put("neutral", res.getInt("neutral"));
-					teamJson.put("agree", res.getInt("agree"));
-					teamJson.put("stronglyAgree", res.getInt("agree"));					
+					teamJson.put("responseCount", res.getInt("response_count"));
+					teamJson.put("level", "team");
+
+					float teamTotalResponse = res.getInt("strongly_disagree") + res.getInt("disagree") + res.getInt("neutral") + res.getInt("agree")
+							+ res.getInt("strongly_agree");
+
+					teamJson.put("stronglyDisagree", Math.round((((float) res.getInt("strongly_disagree") / teamTotalResponse) * 100)));
+					teamJson.put("disagree", Math.round((((float) res.getInt("disagree") / teamTotalResponse) * 100)));
+					teamJson.put("neutral", Math.round((((float) res.getInt("neutral") / teamTotalResponse) * 100)));
+					teamJson.put("agree", Math.round((((float) res.getInt("agree") / teamTotalResponse) * 100)));
+					teamJson.put("stronglyAgree", Math.round((((float) res.getInt("strongly_agree") / teamTotalResponse) * 100)));
 					result.put(teamJson);
-					
+
+					float orgTotalResponse = res.getInt("strongly_disagree_o") + res.getInt("disagree_o") + res.getInt("neutral_o")
+							+ res.getInt("agree_o") + res.getInt("strongly_agree_o");
+
 					JSONObject orgJson = new JSONObject();
 					orgJson.put("relId", res.getInt("rel_id"));
+					orgJson.put("relName", res.getString("rel_name"));
 					orgJson.put("explanation", res.getString("explanation"));
 					orgJson.put("action", res.getString("action"));
-					orgJson.put("responseCount", res.getString("response_count"));
-					orgJson.put("level", "org");					
-					orgJson.put("stronglyDisagree", res.getInt("strongly_disagree_o"));
-					orgJson.put("disagree", res.getInt("disagree_o"));
-					orgJson.put("neutral", res.getInt("neutral_o"));
-					orgJson.put("agree", res.getInt("agree_o"));
-					orgJson.put("stronglyAgree", res.getInt("strongly_agree_o"));					
+					orgJson.put("responseCount", res.getInt("response_count"));
+					orgJson.put("level", "org");
+					orgJson.put("stronglyDisagree", Math.round((((float) res.getInt("strongly_disagree_o") / orgTotalResponse) * 100)));
+					orgJson.put("disagree", Math.round((((float) res.getInt("disagree_o") / orgTotalResponse) * 100)));
+					orgJson.put("neutral", Math.round((((float) res.getInt("neutral_o") / orgTotalResponse) * 100)));
+					orgJson.put("agree", Math.round((((float) res.getInt("agree_o") / orgTotalResponse) * 100)));
+					orgJson.put("stronglyAgree", Math.round((((float) res.getInt("strongly_agree_o") / orgTotalResponse) * 100)));
 					result.put(orgJson);
 				}
 			}
@@ -280,26 +289,24 @@ public class HrDashboardHelper {
 		return result.toString();
 
 	}
-	
-	
+
 	public String getExploreData(int companyId) {
 
 		JSONArray result = new JSONArray();
 		DatabaseConnectionHelper dch = DatabaseConnectionHelper.getDBHelper();
 		dch.refreshCompanyConnection(companyId);
-		try (CallableStatement cstmt = dch.companyConnectionMap.get(companyId).getDataSource().getConnection().prepareCall(
-				"{call getExploreData()}");
-			ResultSet res = cstmt.executeQuery()) {
-				while (res.next()) {
-					JSONObject json = new JSONObject();
-					json.put("indexValue", res.getInt("metric_value"));
-					json.put("function", res.getString("Function"));
-					json.put("position", res.getString("Position"));
-					json.put("location", res.getString("Location"));
-					json.put("relName", res.getString("rel_name"));
-					result.put(json);
-				}
-			
+		try (CallableStatement cstmt = dch.companyConnectionMap.get(companyId).getDataSource().getConnection().prepareCall("{call getExploreData()}");
+				ResultSet res = cstmt.executeQuery()) {
+			while (res.next()) {
+				JSONObject json = new JSONObject();
+				json.put("indexValue", res.getInt("metric_value"));
+				json.put("function", res.getString("Function"));
+				json.put("position", res.getString("Position"));
+				json.put("location", res.getString("Location"));
+				json.put("relName", res.getString("rel_name"));
+				result.put(json);
+			}
+
 		} catch (JSONException | SQLException e) {
 			Logger.getLogger(HrDashboardHelper.class).error("Error while retrieving self perception", e);
 		}
