@@ -14,12 +14,6 @@ import org.owen.helper.DatabaseConnectionHelper;
 
 public class HrDashboardHelper {
 
-	public static void main(String arg[]) {
-		HrDashboardHelper hr = new HrDashboardHelper();
-		System.out.println(hr.getSelfPerception(1, 1, 18, 19));
-
-	}
-
 	public String getNodeList(int companyId, int functionId, int positionId, int locationId) {
 		JSONArray nodeList = new JSONArray();
 		DatabaseConnectionHelper dch = DatabaseConnectionHelper.getDBHelper();
@@ -45,12 +39,9 @@ public class HrDashboardHelper {
 					nodeList.add(n);*/
 				}
 				Logger.getLogger(HrDashboardHelper.class).debug("Node list size : " + nodeList.length());
-			} catch (JSONException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
 			}
-		} catch (SQLException e1) {
-			Logger.getLogger(HrDashboardHelper.class).error("Error while retrieving team networks diagram nodes ", e1);
+		} catch (JSONException | SQLException e) {
+			Logger.getLogger(HrDashboardHelper.class).error("Error while retrieving team networks diagram nodes ", e);
 		}
 		return nodeList.toString();
 
@@ -109,11 +100,8 @@ public class HrDashboardHelper {
 					json.put("responseCount", res.getInt("response_count"));
 					result.put(json);
 				}
-			} catch (JSONException e) {
-				Logger.getLogger(HrDashboardHelper.class).error("Error while retrieving index value", e);
-
 			}
-		} catch (SQLException e1) {
+		} catch (JSONException | SQLException e1) {
 			Logger.getLogger(HrDashboardHelper.class).error("Error while retrieving index value", e1);
 		}
 		return result.toString();
@@ -155,28 +143,45 @@ public class HrDashboardHelper {
 
 				JSONObject json1 = new JSONObject();
 				json1.put("relId", 1);
-				json1.put("keyPeople", rel1.values());
+				JSONObject keyPeople1 = new JSONObject();
+				for (double key : rel1.keySet()) {
+					keyPeople1.put("" + key, rel1.get(key));
+				}
+				json1.put("keyPeople", keyPeople1);
 				result.put(json1);
 
 				JSONObject json2 = new JSONObject();
 				json2.put("relId", 2);
-				json2.put("keyPeople", rel2.values());
+				JSONObject keyPeople2 = new JSONObject();
+				for (double key : rel2.keySet()) {
+					keyPeople2.put("" + key, rel2.get(key));
+				}
+				json2.put("keyPeople", keyPeople2);
 				result.put(json2);
 
 				JSONObject json3 = new JSONObject();
 				json3.put("relId", 3);
-				json3.put("keyPeople", rel3.values());
+				JSONObject keyPeople3 = new JSONObject();
+				for (double key : rel3.keySet()) {
+					keyPeople3.put("" + key, rel3.get(key));
+				}
+				json3.put("keyPeople", keyPeople3);
 				result.put(json3);
 
 				JSONObject json4 = new JSONObject();
 				json4.put("relId", 4);
-				json4.put("keyPeople", rel4.values());
+				JSONObject keyPeople4 = new JSONObject();
+				for (double key : rel4.keySet()) {
+					keyPeople4.put("" + key, rel4.get(key));
+				}
+				json4.put("keyPeople", keyPeople4);
 				result.put(json4);
 
 			}
 		} catch (JSONException | SQLException e) {
 			Logger.getLogger(HrDashboardHelper.class).error("Error while retrieving key people", e);
 		}
+		System.out.println(result);
 		return result.toString();
 	}
 
@@ -225,10 +230,8 @@ public class HrDashboardHelper {
 					json.put("responseCount", res.getInt("response_count"));
 					result.put(json);
 				}
-			} catch (JSONException e) {
-				Logger.getLogger(HrDashboardHelper.class).error("Error while retrieving sentiment score", e);
 			}
-		} catch (SQLException e1) {
+		} catch (JSONException | SQLException e1) {
 			Logger.getLogger(HrDashboardHelper.class).error("Error while retrieving sentiment score", e1);
 		}
 		return result.toString();
