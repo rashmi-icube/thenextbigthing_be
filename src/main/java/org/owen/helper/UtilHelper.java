@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -12,6 +13,7 @@ import java.util.Properties;
 
 public class UtilHelper {
 
+	public static List<String> colorList = getColorList();
 	public static final String dateTimeFormat = "yyyy-MM-dd HH:mm:ss"; // 2016-01-01 00:00:00
 	public static final String dateFormat = "yyyy-MM-dd"; // 2016-01-01;
 
@@ -97,5 +99,37 @@ public class UtilHelper {
 			org.apache.log4j.Logger.getLogger(UtilHelper.class).error("Error while getting integer value of " + val);
 		}
 		return iVal;
+	}
+
+	public static List<String> getColorList() {
+		List<String> colorList = new ArrayList<>();
+
+		colorList.add("#f44336");
+		colorList.add("#E91E63");
+		colorList.add("#9C27B0");
+		colorList.add("#3F51B5");
+		colorList.add("#2196F3");
+		colorList.add("#009688");
+		colorList.add("#4CAF50");
+		colorList.add("#8BC34A");
+		colorList.add("#CDDC39");
+		colorList.add("#FFEB3B");
+		colorList.add("#FFC107");
+		colorList.add("#FF9800");
+		colorList.add("#FF5722");
+		colorList.add("#ef9a9a");
+		colorList.add("#F48FB1");
+		colorList.add("#CE93D8");
+		colorList.add("#9FA8DA");
+		colorList.add("#81D4FA");
+		colorList.add("#80CBC4");
+		colorList.add("#A5D6A7");
+		colorList.add("#C5E1A5");
+		colorList.add("#E6EE9C");
+		colorList.add("#FFF59D");
+		colorList.add("#FFCC80");
+		colorList.add("#FFAB91");
+
+		return colorList;
 	}
 }

@@ -27,7 +27,7 @@ public class ResponseHelper {
 
 			for (int i = 0; i < responseList.size(); i++) {
 				Response respObj = responseList.get(i);
-				if (respObj.getQuestionType() == QuestionType.ME || respObj.getQuestionType() == QuestionType.MOOD) {
+				if (respObj.getQuestionType() == QuestionType.ME ) {
 					Logger.getLogger(ResponseHelper.class).debug(
 							"Entering saveAllResponses (ME/MOOD) for question ID" + respObj.getQuestionId() + " for employee ID : "
 									+ respObj.getEmployeeId());

@@ -49,8 +49,7 @@ public class EmployeeList {
 				dch.releaseRcon();
 				throw new Exception("Error: " + employeeSmartList.asString());
 			} else {
-				Logger.getLogger(EmployeeList.class).debug(
-						"Retrieval of the employee smart list completed " + employeeSmartList.asList());
+				Logger.getLogger(EmployeeList.class).debug("Retrieval of the employee smart list completed " + employeeSmartList.asList());
 			}
 
 			RList result = employeeSmartList.asList();
@@ -91,8 +90,8 @@ public class EmployeeList {
 		DatabaseConnectionHelper dch = DatabaseConnectionHelper.getDBHelper();
 		dch.refreshCompanyConnection(companyId);
 		List<Employee> employeeList = new ArrayList<>();
-		try (CallableStatement cstmt = dch.companyConnectionMap.get(companyId).getDataSource().getConnection()
-				.prepareCall("{call getEmployeeList()}");
+		try (CallableStatement cstmt = dch.companyConnectionMap.get(companyId).getDataSource().getConnection().prepareCall(
+				"{call getEmployeeMasterList()}");
 				ResultSet res = cstmt.executeQuery()) {
 			Logger.getLogger(EmployeeList.class).debug("getEmployeeMasterList method started");
 			Logger.getLogger(EmployeeList.class).debug("query : " + cstmt);
@@ -182,8 +181,7 @@ public class EmployeeList {
 				}
 
 			} catch (SQLException e1) {
-				Logger.getLogger(EmployeeList.class).error(
-						"Exception while retrieving employee object with employeeIds : " + employeeIdList, e1);
+				Logger.getLogger(EmployeeList.class).error("Exception while retrieving employee object with employeeIds : " + employeeIdList, e1);
 			}
 		}
 		return empList;

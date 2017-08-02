@@ -7,16 +7,41 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.owen.filter.FilterHelper;
 import org.owen.helper.DatabaseConnectionHelper;
 
 public class HrDashboardHelper {
+
+	public String getNodeEdgeData(int companyId, int functionId, int positionId, int locationId) {
+		JSONArray nodeEdgeData = new JSONArray();
+		try {
+			JSONArray nodeList = new JSONArray(getNodeList(companyId, functionId, positionId, locationId));
+			JSONArray edgeList = new JSONArray(getEdgeList(companyId, functionId, positionId, locationId));
+
+			for (int i = 0; i < nodeList.length(); i++) {
+				JSONObject d = new JSONObject();
+				d.put("data", nodeList.getJSONObject(i));
+				d.put("group", "nodes");
+				nodeEdgeData.put(d);
+			}
+			for (int i = 0; i < edgeList.length(); i++) {
+				JSONObject d = new JSONObject();
+				d.put("data", edgeList.getJSONObject(i));
+				d.put("group", "edges");
+				nodeEdgeData.put(d);
+			}
+		} catch (JSONException e) {
+			Logger.getLogger(HrDashboardHelper.class).error("Error while retrieving team networks diagram nodes edge data", e);
+		}
+		return nodeEdgeData.toString();
+
+	}
 
 	public String getNodeList(int companyId, int functionId, int positionId, int locationId) {
 		JSONArray nodeList = new JSONArray();
@@ -28,13 +53,17 @@ public class HrDashboardHelper {
 			cstmt.setInt("fun", functionId);
 			cstmt.setInt("pos", positionId);
 			cstmt.setInt("loc", locationId);
+			FilterHelper fh = new FilterHelper();
+			Map<Integer, String> filterColorMap = fh.getFilterValuesColors(companyId);
 			try (ResultSet res = cstmt.executeQuery()) {
 				while (res.next()) {
-
 					JSONObject node = new JSONObject();
 					node.put("id", res.getInt("emp_id"));
 					node.put("firstName", res.getString("first_name"));
 					node.put("lastName", res.getString("last_name"));
+					node.put("fColor", filterColorMap.get(res.getInt("Function_id")));
+					node.put("pColor", filterColorMap.get(res.getInt("Position_id")));
+					node.put("lColor", filterColorMap.get(res.getInt("Location_id")));
 					nodeList.put(node);
 				}
 				Logger.getLogger(HrDashboardHelper.class).debug("Node list size : " + nodeList.length());
@@ -114,20 +143,30 @@ public class HrDashboardHelper {
 			Map<Double, String> rel4 = new TreeMap<>();
 			try (ResultSet res = cstmt.executeQuery()) {
 				while (res.next()) {
-					if (res.getInt("rel_id") == 1) {
+					// TODO : Hard coded please change
+					if (res.getInt("rel_id") == 7) {
 						rel1.put(res.getDouble("emp_rank"), res.getString("first_name") + " " + res.getString("last_name"));
-					} else if (res.getInt("rel_id") == 2) {
+					} else if (res.getInt("rel_id") == 8) {
 						rel2.put(res.getDouble("emp_rank"), res.getString("first_name") + " " + res.getString("last_name"));
-					} else if (res.getInt("rel_id") == 3) {
+					} else if (res.getInt("rel_id") == 9) {
 						rel3.put(res.getDouble("emp_rank"), res.getString("first_name") + " " + res.getString("last_name"));
-					} else if (res.getInt("rel_id") == 4) {
+					} else if (res.getInt("rel_id") == 10) {
 						rel4.put(res.getDouble("emp_rank"), res.getString("first_name") + " " + res.getString("last_name"));
 					}
 				}
-				result.put("1", rel1);
-				result.put("2", rel2);
-				result.put("3", rel3);
-				result.put("4", rel4);
+				if (!rel1.isEmpty()) {
+					result.put("7", rel1);
+				}
+				if (!rel2.isEmpty()) {
+					result.put("8", rel2);
+				}
+				if (!rel3.isEmpty()) {
+					result.put("9", rel3);
+				}
+				if (!rel4.isEmpty()) {
+					result.put("10", rel4);
+				}
+
 			}
 		} catch (JSONException | SQLException e) {
 			Logger.getLogger(HrDashboardHelper.class).error("Error while retrieving key people", e);
@@ -147,7 +186,6 @@ public class HrDashboardHelper {
 			cstmt.setInt("loc", locationId);
 
 			Map<Integer, List<Map<String, Object>>> resultMap = new HashMap<>();
-			String[] wordList = { "positive", "neutral", "negative" };
 			try (ResultSet res = cstmt.executeQuery()) {
 				while (res.next()) {
 					int relId = res.getInt("rel_id");
@@ -155,13 +193,8 @@ public class HrDashboardHelper {
 					Map<String, Object> innerMap = new HashMap<>();
 					innerMap.put("word", res.getString("word"));
 					innerMap.put("frequency", res.getInt("weight"));
-
-					// TODO : Get associated words from db
-					innerMap.put("association", generateRandomWords(5));
-
-					// TODO : Replace with actual sentiment from db
-					String randomString = wordList[(int) (Math.random() * wordList.length)];
-					innerMap.put("sentiment", randomString);
+					innerMap.put("association", res.getString("associated_words"));
+					innerMap.put("sentiment", res.getString("sentiment"));
 
 					if (resultMap.containsKey(relId)) {
 						resultMap.get(relId).add(innerMap);
@@ -189,20 +222,6 @@ public class HrDashboardHelper {
 			Logger.getLogger(HrDashboardHelper.class).error("Error while retrieving word cloud", e);
 		}
 		return result.toString();
-	}
-
-	public static StringBuffer generateRandomWords(int numberOfWords) {
-		StringBuffer randomStrings = new StringBuffer();
-		Random random = new Random();
-		for (int i = 0; i < numberOfWords; i++) {
-			char[] word = new char[random.nextInt(8) + 3]; // words of length 3 through 10. (1 and 2 letter words are boring.)
-			for (int j = 0; j < word.length; j++) {
-				word[j] = (char) ('a' + random.nextInt(26));
-			}
-			randomStrings.append(", ");
-			randomStrings.append(word);
-		}
-		return randomStrings;
 	}
 
 	public String getSentimentScore(int companyId, int functionId, int positionId, int locationId) {
@@ -248,51 +267,46 @@ public class HrDashboardHelper {
 					int relId = res.getInt("rel_id");
 					JSONObject innerObj = new JSONObject();
 
-					float teamTotalResponse = res.getInt("strongly_disagree") + res.getInt("disagree") + res.getInt("neutral") + res.getInt("agree")
-							+ res.getInt("strongly_agree");
-
-					float orgTotalResponse = res.getInt("strongly_disagree_o") + res.getInt("disagree_o") + res.getInt("neutral_o")
-							+ res.getInt("agree_o") + res.getInt("strongly_agree_o");
-
 					JSONArray jArray = new JSONArray();
 
 					JSONObject sd = new JSONObject();
 					sd.put("name", "Strongly Disagree");
 					Integer[] dataArraySD = new Integer[2];
-					dataArraySD[0] = Math.round((((float) res.getInt("strongly_disagree_o") / orgTotalResponse) * 100));
-					dataArraySD[1] = Math.round((((float) res.getInt("strongly_disagree") / teamTotalResponse) * 100));
+					dataArraySD[0] = Math.round((float) res.getInt("strongly_disagree_o"));
+					dataArraySD[1] = Math.round((float) res.getInt("strongly_disagree"));
 					sd.put("data", dataArraySD);
 					jArray.put(sd);
 
 					JSONObject d = new JSONObject();
 					d.put("name", "Disagree");
 					Integer[] dataArrayD = new Integer[2];
-					dataArrayD[0] = Math.round((((float) res.getInt("disagree_o") / orgTotalResponse) * 100));
-					dataArrayD[1] = Math.round((((float) res.getInt("disagree") / teamTotalResponse) * 100));
+					dataArrayD[0] = Math.round((float) res.getInt("disagree_o"));
+					dataArrayD[1] = Math.round((float) res.getInt("disagree"));
 					d.put("data", dataArrayD);
 					jArray.put(d);
 
 					JSONObject n = new JSONObject();
 					n.put("name", "Neutral");
 					Integer[] dataArrayN = new Integer[2];
-					dataArrayN[0] = Math.round((((float) res.getInt("neutral_o") / orgTotalResponse) * 100));
-					dataArrayN[1] = Math.round((((float) res.getInt("neutral") / teamTotalResponse) * 100));
+					dataArrayN[0] = Math.round((float) res.getInt("neutral_o"));
+					dataArrayN[1] = Math.round((float) res.getInt("neutral"));
 					n.put("data", dataArrayN);
 					jArray.put(n);
 
 					JSONObject a = new JSONObject();
 					a.put("name", "Agree");
 					Integer[] dataArray = new Integer[2];
-					dataArray[0] = Math.round((((float) res.getInt("agree_o") / orgTotalResponse) * 100));
-					dataArray[1] = Math.round((((float) res.getInt("agree") / teamTotalResponse) * 100));
+					dataArray[0] = Math.round((float) res.getInt("agree_o"));
+					dataArray[1] = Math.round((float) res.getInt("agree"));
+					a.put("data", dataArray);
 					a.put("data", dataArray);
 					jArray.put(a);
 
 					JSONObject sa = new JSONObject();
 					sa.put("name", "Strongly Agree");
 					Integer[] dataArraySA = new Integer[2];
-					dataArraySA[0] = Math.round((((float) res.getInt("strongly_agree_o") / orgTotalResponse) * 100));
-					dataArraySA[1] = Math.round((((float) res.getInt("strongly_agree") / teamTotalResponse) * 100));
+					dataArraySA[0] = Math.round((float) res.getInt("strongly_agree_o"));
+					dataArraySA[1] = Math.round((float) res.getInt("strongly_agree"));
 					sa.put("data", dataArraySA);
 					jArray.put(sa);
 
@@ -344,10 +358,10 @@ public class HrDashboardHelper {
 		Map<Integer, Map<String, Integer>> resultMap = new HashMap<>();
 
 		try (CallableStatement cstmt = dch.companyConnectionMap.get(companyId).getDataSource().getConnection().prepareCall(
-				"{call getSentimentDistribution()}")) {
-			// cstmt.setInt("fun", functionId);
-			// cstmt.setInt("pos", positionId);
-			// cstmt.setInt("loc", locationId);
+				"{call getSentimentDistribution(?,?,?)}")) {
+			cstmt.setInt("fun", functionId);
+			cstmt.setInt("pos", positionId);
+			cstmt.setInt("loc", locationId);
 
 			try (ResultSet res = cstmt.executeQuery()) {
 				while (res.next()) {
@@ -358,6 +372,9 @@ public class HrDashboardHelper {
 						resultMap.put(relId, innerMap);
 					} else {
 						Map<String, Integer> innerMap = new HashMap<>();
+						innerMap.put("Positive", 0);
+						innerMap.put("Negative", 0);
+						innerMap.put("Neutral", 0);
 						innerMap.put(res.getString("sentiment"), res.getInt("sent_count"));
 						resultMap.put(relId, innerMap);
 					}

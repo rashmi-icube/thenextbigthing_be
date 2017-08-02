@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.owen.helper.DatabaseConnectionHelper;
+import org.owen.helper.UtilHelper;
 
 public class FilterHelper {
 
@@ -35,6 +36,7 @@ public class FilterHelper {
 			cstmt.setInt(1, f.getFilterId());
 			try (ResultSet rs = cstmt.executeQuery()) {
 				Map<Integer, String> filterValuesMap = new HashMap<>();
+				filterValuesMap.put(0, "All");
 				while (rs.next()) {
 					filterValuesMap.put(rs.getInt("dimension_val_id"), rs.getString("dimension_val_name"));
 					f.setFilterValues(filterValuesMap);
@@ -108,5 +110,22 @@ public class FilterHelper {
 			e.printStackTrace();
 		}
 		return filterLabelMap;
+	}
+
+	public Map<Integer, String> getFilterValuesColors(int companyId) {
+
+		DatabaseConnectionHelper dch = DatabaseConnectionHelper.getDBHelper();
+		dch.refreshCompanyConnection(companyId);
+		Map<Integer, String> filterColorMap = new HashMap<>();
+		List<Filter> filterLabelMap = getFilterValues(companyId);
+		for (int i = 0; i < filterLabelMap.size(); i++) {
+			Filter f = filterLabelMap.get(i);
+			int colorIndex = 0;
+			for (int filterValueId : f.getFilterValues().keySet()) {
+				filterColorMap.put(filterValueId, UtilHelper.colorList.get(colorIndex));
+				colorIndex++;
+			}
+		}
+		return filterColorMap;
 	}
 }
